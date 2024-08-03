@@ -1,0 +1,98 @@
+    index:true in schema
+ 
+creates an index on the specified field in the MongoDB collection. 
+Indexes improve the performance of read operations by allowing the 
+database to quickly locate and retrieve documents.
+
+  --- trim :true---
+
+   trim: true: Automatically removes leading and trailing whitespace from string values before saving them to the databas
+
+------tmiestamp:true-----
+Timestamps save the current time of the document created and also when it was updated in form of a Date by turning it true
+=================================================================================
+
+ -------watchHistory: [
+    {
+        type: Schema.Types.ObjectId,
+        ref: "video"
+    }
+]
+------
+watchHistory
+This is the field name in the schema. It represents a user's watch history, which is expected to be an array of videos that the user has watched
+
+type: Schema.Types.ObjectId: This specifies that each entry in the watchHistory array is an ObjectId. An ObjectId is a unique identifier for a document in a MongoDB collection.
+
+ref: "video": This specifies the collection that the ObjectId refers to. In this case, it refers to the video collection. The ref option tells Mongoose which model to use during population, allowing it to replace the ObjectId with the actual document from the referenced collection when necessary.
+
+Explanation
+
+Purpose: The watchHistory field is used to store a list of references to video documents that the user has watched. Each reference is stored as an ObjectId.
+
+Schema Relationship: This setup creates a relationship between the user's schema and the video schema. It's a way to model a one-to-many relationship where one user can have many watched videos.
+
+Population: By using the ref option, you can use Mongoose's populate method to automatically replace the ObjectIds in the watchHistory array with the actual video documents. This is useful when you need to retrieve detailed information about each video in the watch history.
+
+======================================================================================
+-----videoSchema.plugin(mongooseAggregatePaginate)-----
+
+What is Aggregation in Mongoose?
+Aggregation is a powerful feature in MongoDB that allows you to perform operations on the data, such as filtering, grouping, sorting, and transforming. In Mongoose, you can use the aggregate method to build aggregation pipelines.
+
+What is Pagination?
+Pagination is the process of dividing a large dataset into smaller, manageable chunks (pages). This is especially useful when displaying data in web applications, as it allows you to load and display data in a more user-friendly manner.
+
+The mongooseAggregatePaginate plugin provides pagination functionality for aggregate queries in Mongoose. By using this plugin, you can easily paginate the results of your aggregate queries without having to manually handle the pagination logic.
+
+===================================================================================
+What is bcrypt?
+bcrypt is a library used for hashing passwords. Hashing is a one-way process of converting a plain text password into a secure hash. This ensures that even if the database is compromised, the actual passwords are not exposed.
+
+How Does bcrypt Work?
+Salting: Adds a unique value (called a salt) to each password before hashing to ensure that even if two users have the same password, their hashes will be different.
+Hashing: Uses a computationally intensive algorithm to generate the hash, making it slow enough to deter brute force attacks.
+Common Use Cases
+Password Storage: Securely storing user passwords in a database.
+Password Verification: Comparing a plain text password with a hashed password during user login.
+----------------------------------------------------------------------
+
+What is jsonwebtoken?
+jsonwebtoken (JWT) is a library used to create and verify JSON Web Tokens. JWTs are used to securely transmit information between parties as a JSON object. This information can be verified and trusted because it is digitally signed.
+
+How Does jsonwebtoken Work?
+Signing: A JWT is created by signing a payload (data) with a secret key or a public/private key pair.
+Verification: The token can be verified by anyone who has the appropriate key to ensure the payload has not been tampered with.
+Common Use Cases
+Authentication: Creating tokens for user authentication (e.g., issuing a token upon login and verifying it on subsequent requests).
+Authorization: Ensuring that users have the necessary permissions to access certain resources.
+
+==============================================================================================
+userSchema.pre("save", async function (next) {..})
+
+This code sets up a pre-save hook for the user schema. In Mongoose, pre-hooks are middleware functions that are executed before a certain event. In this case, the event is saving a document to the database
+
+if (!this.isModified("password")) return next();: If the password has not been modified, the hook calls next() and exits, allowing the save operation to proceed without rehashing the password
+
+await bcrypt.hash(this.password, 10): If the password has been modified (or is new), this line hashes the password with a salt round of 10
+
+userSchema.methods.isPasswordCorrect = async function(password) {...}
+This code adds a method to the user schema to compare a given password with the hashed password stored in the database.
+
+await bcrypt.compare(password, this.password): This line uses bcrypt to compare the provided password (password) with the stored hashed password (this.password).
+return ...: It returns the result of the comparison. bcrypt.compare returns true if the passwords match, and false otherwise
+
+Pre-Save Hook: Ensures that whenever a user document is saved, the password is hashed if it has been modified. This protects the user's password by storing a secure hashed version instead of the plain text version.
+
+isPasswordCorrect Method: Provides a way to verify if a given password matches the hashed password stored in the database. This is useful for login functionality where you need to check if the provided password is correct.
+--------------------------------------------------------------------------------
+generateAccessToken
+This method generates an access token, which typically has a short lifespan and is used to authenticate a user's actions
+
+generateRefreshToken
+This method generates a refresh token, which typically has a longer lifespan and is used to obtain new access tokens when they expire.
+
+generateAccessToken: Creates an access token that includes user-specific data (ID, email, username, full name) and has a short expiration time.
+generateRefreshToken: Creates a refresh token that only includes the user's ID and has a longer expiration time
+
+This starts the process of creating a JWT using the jsonwebtoken library's sign function.

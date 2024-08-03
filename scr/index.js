@@ -2,16 +2,22 @@
 
 
 import dotenv from 'dotenv'
-import express from "express"
+
 
 import connectDB from "./db/index.js";
 // index.js likhna hoga yaha agar error aaye 
-const app=express();
+
 
 
 dotenv.config({path: './.env'});
-
-//connectDB();
+// since ye async method --- async jab v complete hota h to promise return karta h ---isllye .then .catch lg skte h 
+connectDB()
+.then(()=>{
+  app.listen(process.env.PORT||8000,()=>{
+    console.log(`listing on ${process.env.PORT}`);
+  })
+})
+.catch((err)=>{console.log('connectDB err:- ',err);})
 
 
 // Add a basic route for testing
@@ -55,3 +61,8 @@ dotenv.config({path: './.env'});
 //     throw error
 //   }
 // })()
+
+
+
+
+///////notes//////
